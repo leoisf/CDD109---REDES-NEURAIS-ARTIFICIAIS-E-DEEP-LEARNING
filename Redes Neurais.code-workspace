@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../CDD108 - APRENDIZADO SUPERVISIONADO/.venv"
+		}
+	],
+	"settings": {
+		"powershell.cwd": "CDD109 - REDES NEURAIS ARTIFICIAIS E DEEP LEARNING"
+	}
+}
