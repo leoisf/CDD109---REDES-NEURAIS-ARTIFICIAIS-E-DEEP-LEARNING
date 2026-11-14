@@ -1,0 +1,100 @@
+CÓDIGOS DO PDF
+
+
+#Bibliotecas para acessar arquivos do Google Drive
+from numpy import genfromtxt
+from google.colab import drive
+
+#Endereco da base de dados no Google Drive
+#Complete o /.../ com o nome do caminho, o path_database deve
+#conter o enderecamento de todas as pastas ate o arquivo. 
+path_database = '/content/gdrive/MyDrive/Colab Notebooks/.../faults.csv'
+
+#Autoriza a leitura do Google Drive.
+#clique no link dado, faca o login e copie o codigo gerado no campo do Colab 
+#para autorizar a leitura.
+drive.mount('/content/gdrive')
+
+#Carregando o dado na matriz my_data
+my_data = genfromtxt(path_database, delimiter=',', skip_header=1, dtype=np.float32)
+# Biblioteca de pre processamento do sklearn
+from sklearn import preprocessing
+#Salvando os dados e os rotulos
+X = my_data[:,0:27]
+Y = my_data[:,27:34]
+
+# Biblioteca de particicao dos dados do sklearn
+from sklearn.model_selection import train_test_split
+X_train, X_test, Y_train, Y_test = train_test_split(X,Y,test_size = 0.30)
+
+# Biblioteca de pre processamento do sklearn
+from sklearn import preprocessing
+min_max_scaler = preprocessing.MinMaxScaler(feature_range=(0, 1))
+X_train = min_max_scaler.fit_transform(X_train)
+X_test = min_max_scaler.transform(X_test)
+
+
+# Avaliando o desempenho da rede neural MLP
+desempenho = model.evaluate(X_test, Y_test, verbose=0)
+print("Acuracia: %.2f%%" % (desempenho[1]*100))
+
+
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+from sklearn.metrics import classification_report
+ 
+nomes_falhas = ['Pastry', 'Z_Scratch', 'K_Scratch', 'Stains',
+                'Dirtiness', 'Bumps', 'Other_Faults']
+ 
+# A saida da rede e um vetor de 7 probabilidades; pegamos a classe
+# de maior probabilidade. Os rotulos One-Hot tambem sao convertidos
+# para o indice da classe.
+Y_pred = model.predict(X_test)
+y_pred = np.argmax(Y_pred, axis=1)
+y_true = np.argmax(Y_test, axis=1)
+ 
+# Matriz de confusao (linhas = classe real, colunas = classe prevista)
+cm = confusion_matrix(y_true, y_pred, labels=range(7))
+ 
+fig, ax = plt.subplots(figsize=(8, 8))
+disp = ConfusionMatrixDisplay(confusion_matrix=cm,
+                              display_labels=nomes_falhas)
+disp.plot(cmap='Blues', ax=ax, xticks_rotation=45)
+plt.title('Matriz de confusao - conjunto de teste')
+plt.show()
+ 
+# Precisao, recall e F1 por classe
+print(classification_report(y_true, y_pred, labels=range(7),
+                            target_names=nomes_falhas, zero_division=0))
+
+
+from sklearn.utils.class_weight import compute_class_weight
+ 
+y_train_int = np.argmax(Y_train, axis=1)
+classes = np.unique(y_train_int)
+pesos = compute_class_weight(class_weight='balanced',
+                             classes=classes, y=y_train_int)
+class_weight = dict(zip(classes, pesos))
+print(class_weight)
+ 
+model = cria_modelo()   # rede nova, sem treino anterior
+model.fit(X_train, Y_train, epochs=100, batch_size=32,
+          class_weight=class_weight, verbose=0)
+
+
+
+
+
+# pip install imbalanced-learn   (se necessario)
+from imblearn.over_sampling import SMOTE
+from tensorflow.keras.utils import to_categorical
+ 
+y_train_int = np.argmax(Y_train, axis=1)
+ 
+smote = SMOTE(random_state=42)
+X_train_bal, y_train_bal = smote.fit_resample(X_train, y_train_int)
+Y_train_bal = to_categorical(y_train_bal, num_classes=7)
+ 
+print(np.bincount(y_train_bal))  # classes agora balanceadas
+ 
+model = cria_modelo()   # rede nova, sem treino anterior
+model.fit(X_train_bal, Y_train_bal, epochs=100, batch_size=32, verbose=0)
